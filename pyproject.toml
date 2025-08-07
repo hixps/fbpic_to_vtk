@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools >=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+
+[project]
+name = "fbpic_to_vtk"
+dynamic = ["version", "readme"]
+license = {file = "LICENSE"}
+dependencies = ["numpy",
+                "h5py",
+                "meshio",
+                "pytest",
+                ]
+requires-python = ">=3.11"
+authors = [{name="Daniel Seipt", email="d.seipt@hi-jena.gsi.de"}]
+description = "A converter from fbpic to vtk format for visualization in ParaView and other tools"
+keywords = ["hiXps","fbpic", "vtk", "converter", "mesh", "simulation", "particle-in-cell", "PIC", "cylindrical geometry", "plasma", "physics", "laser plasma interaction"]
+
+
+[project.optional-dependencies]
+
+
+[project.urls]
+Repository = "https://github.com/hixps/fbpic_to_vtk"
+
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"]}
+version = {attr = "fbpic_to_vtk.__version__.__version__"}
+
+[tools.pytest.ini_options]
+pythonpath = 'src'
