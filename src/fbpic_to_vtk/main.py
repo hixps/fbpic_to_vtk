@@ -32,7 +32,7 @@ def fbpicToVTK( source_filename: str,
 
 
     diag_name = (scalar_diag_names + vector_diag_names)[0]
-    print (diag_name)
+
     # Read radial and axial coordinates
     r, z = importer.read_rz_coordinates(
         source_filename,
