@@ -63,7 +63,7 @@ def vector_field_reconstruction(vector_field: np.ndarray,
 
     """
 
-    thetagrid  = theta[:, np.newaxis, np.newaxis]
+    thetagrid = theta[:, np.newaxis, np.newaxis]
 
     # Reconstruct cylindrical components of the vector field
     v_t, v_r, v_z  = ( calculate_modesum(v, theta) for v in vector_field )
@@ -89,9 +89,9 @@ def cartesian_coordinate_arrays(theta: np.ndarray,
         theta: 1D array of azimuthal coordinates.
 
     Returns:
-        x: broadcastable array of x-coordinates, shape (Ntheta, Nr, 1)
-        y: broadcastable array of y-coordinates, shape (Ntheta, Nr, 1)
-        z: broadcastable array of z-coordinates, shape (1, 1, Nz)
+        xgrid: broadcastable array of x-coordinates, shape (Ntheta, Nr, 1)
+        ygrid: broadcastable array of y-coordinates, shape (Ntheta, Nr, 1)
+        zgrid: broadcastable array of z-coordinates, shape (1, 1, Nz)
     """
 
     assert theta.ndim == 1, "Azimuthal coordinates must be a 1D array"
@@ -103,15 +103,17 @@ def cartesian_coordinate_arrays(theta: np.ndarray,
     Nr = len(r)
     Nz = len(z)
 
+    thetagrid = theta[:, np.newaxis, np.newaxis]
+    rgrid = theta[np.newaxis, :, np.newaxis]
+    zgrid = z[np.newaxis, np.newaxis, :]
 
-    x_ = r[np.newaxis,:,np.newaxis] * np.cos(theta[:,np.newaxis,np.newaxis])
-    y_ = r[np.newaxis,:,np.newaxis] * np.sin(theta[:,np.newaxis,np.newaxis])
-    z_ = z[np.newaxis,np.newaxis,:]
+
+    xgrid = rgrid * np.cos(thetagrid)
+    ygrid = rgrid * np.sin(thetagrid)
 
     # Ensure the shapes are broadcastable
-    assert x_.shape == (Ntheta, Nr, 1), "x-coordinates shape mismatch"
-    assert y_.shape == (Ntheta, Nr, 1), "y-coordinates shape mismatch"
-    assert z_.shape == (1, 1, Nz), "z-coordinates shape mismatch"
+    assert xgrid.shape == (Ntheta, Nr, 1), "x-coordinates shape mismatch"
+    assert ygrid.shape == (Ntheta, Nr, 1), "y-coordinates shape mismatch"
+    assert zgrid.shape == (1, 1, Nz), "z-coordinates shape mismatch"
 
-    return x_, y_, z_   
-
+    return xgrid, ygrid, zgrid
