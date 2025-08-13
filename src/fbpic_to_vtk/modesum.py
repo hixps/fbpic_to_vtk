@@ -34,8 +34,9 @@ def calculate_modesum( field: np.ndarray,
     return np.sum( [ mode * field[i] for i,mode in enumerate(modefunctions) ] , axis = 0 )
 
 
-def scalar_field_reconstruction( sclar_field: np.ndarray,
-                                 theta: np.ndarray ) -> np.ndarray:
+def scalar_field_reconstruction(sclar_field: np.ndarray,
+                                theta: np.ndarray
+                               ) -> np.ndarray:
     """
     Reconstruct scalar field on a cylindrical grid
 
@@ -48,16 +49,17 @@ def scalar_field_reconstruction( sclar_field: np.ndarray,
     return calculate_modesum( sclar_field, theta )
 
 
-def vector_field_reconstruction( vector_field: np.ndarray,
-                                 theta: np.ndarray ) -> np.ndarray:
+def vector_field_reconstruction(vector_field: np.ndarray,
+                                theta: np.ndarray 
+                               ) -> (np.ndarray,np.ndarray,np.ndarray):
     """
     Reconstruct vector field on a cylindrical grid
 
     vector_field: (v_t, v_r, v_z) cylindrical components where each component is a numpy array of the shape ( 2*Nmodes + 1 , Nr , Nz )
     theta: numpy array of the shape ( Ntheta, ) 
 
-    returns the sum over all modes for given theta
-    shape of output array is  ( Ntheta, Nr, Nz, 3 ) 
+    returns cartesian componenets of the mode reconstructed vector field as a tuple
+    the shape of each component array is  ( Ntheta, Nr, Nz ) 
 
     """
 
@@ -74,5 +76,42 @@ def vector_field_reconstruction( vector_field: np.ndarray,
     # Combine the components into a single array
     return (v_x, v_y, v_z)
 
+def cartesian_coordinate_arrays(theta: np.ndarray,
+                                r: np.ndarray, 
+                                z: np.ndarray, 
+                                ) -> (np.ndarray, np.ndarray, np.ndarray):
+    """
+    Convert cylindrical coordinates to Cartesian coordinates.
 
+    Parameters:
+        r: 1D array of radial coordinates.
+        z: 1D array of axial coordinates.
+        theta: 1D array of azimuthal coordinates.
+
+    Returns:
+        x: broadcastable array of x-coordinates, shape (Ntheta, Nr, 1)
+        y: broadcastable array of y-coordinates, shape (Ntheta, Nr, 1)
+        z: broadcastable array of z-coordinates, shape (1, 1, Nz)
+    """
+
+    assert theta.ndim == 1, "Azimuthal coordinates must be a 1D array"
+    assert r.ndim == 1, "Radial coordinates must be a 1D array"
+    assert z.ndim == 1, "Axial coordinates must be a 1D array"
+
+
+    Ntheta = len(theta)
+    Nr = len(r)
+    Nz = len(z)
+
+
+    x_ = r[np.newaxis,:,np.newaxis] * np.cos(theta[:,np.newaxis,np.newaxis])
+    y_ = r[np.newaxis,:,np.newaxis] * np.sin(theta[:,np.newaxis,np.newaxis])
+    z_ = z[np.newaxis,np.newaxis,:]
+
+    # Ensure the shapes are broadcastable
+    assert x_.shape == (Ntheta, Nr, 1), "x-coordinates shape mismatch"
+    assert y_.shape == (Ntheta, Nr, 1), "y-coordinates shape mismatch"
+    assert z_.shape == (1, 1, Nz), "z-coordinates shape mismatch"
+
+    return x_, y_, z_   
 
