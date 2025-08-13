@@ -2,7 +2,12 @@ import h5py
 import numpy as np
 
 
-def read_hdf5_file(source_filename, timestep, scalar_diag_names, vector_diag_names, downsample_3d=(slice(None), slice(None), slice(None)) ):
+def read_hdf5_file(source_filename: str, 
+                   timestep: int, 
+                   scalar_diag_names: tuple(str), 
+                   vector_diag_names: tuple(str), 
+                   downsample_3d=(slice(None), slice(None), slice(None)) 
+                   ) -> (dict, dict):
     """
     Reads scalar and vector diagnostics from an HDF5 file at a specified timestep.
 
@@ -11,9 +16,11 @@ def read_hdf5_file(source_filename, timestep, scalar_diag_names, vector_diag_nam
         timestep (int): The timestep to read data from.
         scalar_diag_names (list of str): List of scalar diagnostic names to read.
         vector_diag_names (list of str): List of vector diagnostic names to read.
+        downsample_3d (tuple): A tuple of slices to downsample the 3D data.
 
     Returns:
-        dict: A dictionary containing the requested scalar and vector diagnostics.
+        scalar_diags: A dictionary containing the requested scalar diagnostics with the scalar_diag_names as keys.
+        vector_diags: A dictionary containing the requested vector diagnostics with the vector_diag_names as keys
     """
     scalar_diags = {}
     vector_diags = {}
@@ -32,18 +39,24 @@ def read_hdf5_file(source_filename, timestep, scalar_diag_names, vector_diag_nam
     return scalar_diags, vector_diags
 
 
-def read_rz_coordinates(source_filename, timestep, diag_name, downsample_r=None, downsample_z=None):
+def read_rz_coordinates(source_filename: str, 
+                        timestep: int, 
+                        diag_name: str, 
+                        downsample_r=slice(None), 
+                        downsample_z=slice(None)
+                        ) -> (np.ndarray, np.ndarray):
     """
-    Reads scalar and vector diagnostics from an HDF5 file at a specified timestep.
+    Reads the radial and axial grid shapes from the attributes of a diagnostic in an HDF5 file.
+    Then generates the radial and axial coordinates based on the grid spacing.
 
     Parameters:
         source_filename (str): Path to the HDF5 file.
         timestep (int): The timestep to read data from.
-        scalar_diag_names (list of str): List of scalar diagnostic names to read.
-        vector_diag_names (list of str): List of vector diagnostic names to read.
+        diag_name (str): Name of the diagnostic to read the grid shape from
 
     Returns:
-        dict: A dictionary containing the requested scalar and vector diagnostics.
+        r: 1d array of radial coordinates.
+        z: 1d array of axial coordinates.
     """
 
     # diag_names = scalar_diag_names | vector_diag_names
