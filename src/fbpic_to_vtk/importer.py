@@ -4,9 +4,9 @@ import numpy as np
 
 def read_hdf5_file(source_filename: str, 
                    timestep: int, 
-                   scalar_diag_names: tuple(str), 
-                   vector_diag_names: tuple(str), 
-                   downsample_3d=(slice(None), slice(None), slice(None)) 
+                   scalar_diag_names: tuple[str], 
+                   vector_diag_names: tuple[str], 
+                   downsample_3d: (slice,slice,slice) = (slice(None), slice(None), slice(None)) 
                    ) -> (dict, dict):
     """
     Reads scalar and vector diagnostics from an HDF5 file at a specified timestep.
@@ -42,8 +42,8 @@ def read_hdf5_file(source_filename: str,
 def read_rz_coordinates(source_filename: str, 
                         timestep: int, 
                         diag_name: str, 
-                        downsample_r=slice(None), 
-                        downsample_z=slice(None)
+                        downsample_r: slice = slice(None), 
+                        downsample_z: slice = slice(None)
                         ) -> (np.ndarray, np.ndarray):
     """
     Reads the radial and axial grid shapes from the attributes of a diagnostic in an HDF5 file.

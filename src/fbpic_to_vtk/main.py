@@ -5,8 +5,8 @@ from . import importer, exporter, modesum
 
 def fbpicToVTK( source_filename: str,
                 timestep: int,
-                scalar_diag_names: dict[str],
-                vector_diag_names: dict[str],
+                scalar_diag_names: tuple[str],
+                vector_diag_names: tuple[str],
                 downsample_r: slice = slice(None),
                 downsample_z: slice = slice(None),
                 Ntheta: int = 32,

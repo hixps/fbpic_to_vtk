@@ -2,9 +2,12 @@ import numpy as np
 import meshio
 
 def export_to_VTK(
-    theta_coords, r_coords, z_coords, 
-    scalar_diags, vector_diags,
-    filename="fbpic_cylinder_data.vtu"
+    theta_coords: np.ndarray, 
+    r_coords: np.ndarray,
+    z_coords: np.ndarray, 
+    scalar_diags: dict, 
+    vector_diags: dict,
+    filename: str = "fbpic_cylinder_data.vtu"
     ):
     """
     Exports a solid cylinder VTK file from 3D data arrays with flexible scalar

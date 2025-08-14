@@ -2,7 +2,8 @@ import numpy as np
 
 
 def calculate_modesum( field: np.ndarray,
-					   theta: np.ndarray ) -> np.ndarray:
+					   theta: np.ndarray 
+                     ) -> np.ndarray:
 
     """
     Reconstruct 3D diagnostic on a cylindrical grid
@@ -34,8 +35,8 @@ def calculate_modesum( field: np.ndarray,
     return np.sum( [ mode * field[i] for i,mode in enumerate(modefunctions) ] , axis = 0 )
 
 
-def scalar_field_reconstruction(sclar_field: np.ndarray,
-                                theta: np.ndarray
+def scalar_field_reconstruction( sclar_field: np.ndarray,
+                                 theta: np.ndarray
                                ) -> np.ndarray:
     """
     Reconstruct scalar field on a cylindrical grid
@@ -76,10 +77,10 @@ def vector_field_reconstruction(vector_field: np.ndarray,
     # Combine the components into a single array
     return (v_x, v_y, v_z)
 
-def cartesian_coordinate_arrays(theta: np.ndarray,
-                                r: np.ndarray, 
-                                z: np.ndarray, 
-                                ) -> (np.ndarray, np.ndarray, np.ndarray):
+def cartesian_coordinate_arrays( theta: np.ndarray,
+                                 r: np.ndarray, 
+                                 z: np.ndarray, 
+                               ) -> (np.ndarray, np.ndarray, np.ndarray):
     """
     Convert cylindrical coordinates to Cartesian coordinates.
 
