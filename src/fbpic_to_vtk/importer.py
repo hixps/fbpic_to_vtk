@@ -72,7 +72,7 @@ def read_rz_coordinates(source_filename: str,
         except TypeError:
             Nr, Nz = source[f'data/{timestep}/fields/{diag_name}/t'][()].shape[1:]
 
-    r = dr * np.arange(Nr)[downsample_r]
-    z = dz * np.arange(Nz)[downsample_z]
+    r = dr * np.arange(Nr)[downsample_r] + 0.5*dr
+    z = dz * np.arange(Nz)[downsample_z] + 0.5*dz
 
     return r, z
