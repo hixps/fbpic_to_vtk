@@ -42,7 +42,6 @@ def fbpicToVTK( source_filename: str,
         downsample_z=downsample_z
         )
 
-
     # Read scalar and vector diagnostics from the HDF5 file
     scalar_diags_modes, vector_diags_modes = importer.read_hdf5_file(
         source_filename,

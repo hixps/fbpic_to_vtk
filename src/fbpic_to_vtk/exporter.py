@@ -10,8 +10,11 @@ def export_to_VTK(
     filename: str = "fbpic_cylinder_data.vtu"
     ):
     """
-    Exports a solid cylinder VTK file from 3D data arrays with flexible scalar
-    and vector data input, using a fast, vectorized approach.
+    Exports a solid cylinder VTK file from 3D data arrays. The input data is
+    assumed to be defined at the *cell centers* in the radial direction.
+
+    The output grid is defined at the cell corners, with an extra ring of
+    points at r=0.
 
     Args:
         theta_coords (np.ndarray): 1D array of theta coordinates (shape: (ntheta,)).
@@ -25,11 +28,24 @@ def export_to_VTK(
                              arrays (vx, vy, vz) with shape (ntheta, nr, nz).
         filename (str): The name of the output VTK file.
     """
-    nr = len(r_coords)
+    nr_in = len(r_coords)
     ntheta = len(theta_coords)
     nz = len(z_coords)
 
+    # --- 1. Define the output grid coordinates (at cell corners) ---
+    # Assume uniform spacing, a common case for cell-centered data.
+    # The first cell is centered at r_coords[0] and has width dr.
+    dr = r_coords[1] - r_coords[0]
+    # The radial grid for the output points starts at 0 and goes to the
+    # outer boundaries of the cells.
+    r_coords_output = np.concatenate(([0.], r_coords))
+    nr_out = len(r_coords_output)
+
     # --- Vectorized Point Generation ---
+    # Now there are two types of points: at r=0 and at r>0.
+    # The points for r>0 will be based on the output grid, which has Nr+1 nodes.
+    # To match the original code's structure, we'll keep the same loop logic for points.
+    
     # The central axis points (r=0) are handled separately
     z_axis_points = np.column_stack((
         np.zeros(nz), 
@@ -37,14 +53,16 @@ def export_to_VTK(
         z_coords
     ))
 
-    # The outer points (r>0) are generated using vectorized operations
-    theta_grid, r_grid, z_grid = np.meshgrid(
-        theta_coords, r_coords[1:], z_coords, indexing='ij'
+    # The outer points (r>0) are generated using the new output r-coordinates.
+    # Note: meshgrid now uses r_coords_output[1:] which has the same size as the
+    # original r_coords. The data arrays will thus match the point arrays.
+    theta_grid_out, r_grid_out, z_grid_out = np.meshgrid(
+        theta_coords, r_coords_output[1:], z_coords, indexing='ij'
     )
     
-    x_outer = r_grid * np.cos(theta_grid)
-    y_outer = r_grid * np.sin(theta_grid)
-    z_outer = z_grid
+    x_outer = r_grid_out * np.cos(theta_grid_out)
+    y_outer = r_grid_out * np.sin(theta_grid_out)
+    z_outer = z_grid_out
 
     outer_points = np.column_stack((
         x_outer.flatten(),
@@ -58,11 +76,14 @@ def export_to_VTK(
     # Process each scalar field in the dictionary
     processed_scalar_diags = {}
     for name, data_3d in scalar_diags.items():
-        # Average data for the central axis (r=0)
+        # Average data for the central axis (r=0) from the innermost ring (index 0)
         scalar_r0 = np.mean(data_3d[:, 0, :], axis=0)
         
-        # Flatten the outer data directly, ensuring correct order
-        outer_scalar_data = data_3d[:, 1:, :].flatten()
+        # Flatten the outer data directly. Since the input grid has nr_in points and
+        # the output grid has nr_out points, we need to be careful. The new r>0
+        # points correspond to the original data points from r_coords.
+        # So we can just flatten the whole data array (not slicing).
+        outer_scalar_data = data_3d.flatten()
         
         # Combine central and outer data
         processed_scalar_diags[name] = np.concatenate((scalar_r0, outer_scalar_data)).astype('float32')
@@ -70,15 +91,15 @@ def export_to_VTK(
     # Process each vector field in the dictionary
     processed_vector_diags = {}
     for name, (vx_3d, vy_3d, vz_3d) in vector_diags.items():
-        # Average data for the central axis (r=0)
+        # Average data for the central axis (r=0) from the innermost ring (index 0)
         vx_r0 = np.mean(vx_3d[:, 0, :], axis=0)
         vy_r0 = np.mean(vy_3d[:, 0, :], axis=0)
         vz_r0 = np.mean(vz_3d[:, 0, :], axis=0)
         
-        # Flatten the outer data directly, ensuring correct order
-        outer_vx_data = vx_3d[:, 1:, :].flatten()
-        outer_vy_data = vy_3d[:, 1:, :].flatten()
-        outer_vz_data = vz_3d[:, 1:, :].flatten()
+        # Flatten the outer data directly (no slicing)
+        outer_vx_data = vx_3d.flatten()
+        outer_vy_data = vy_3d.flatten()
+        outer_vz_data = vz_3d.flatten()
         
         # Combine central and outer data
         vx_final = np.concatenate((vx_r0, outer_vx_data)).astype('float32')
@@ -90,11 +111,12 @@ def export_to_VTK(
 
     # --- Vectorized Cell Connectivity ---
     nz_cells = nz - 1
-    nr_outer_cells = nr - 1
+    # The number of radial cells in the output grid is nr_out-1, which is nr_in.
+    nr_out_cells = nr_in
     ntheta_cells = ntheta
     
     outer_point_index_offset = nz
-    slice_factor = nr_outer_cells * nz
+    slice_factor = (nr_out - 1) * nz
 
     # 1. Wedge connectivity (at the center, r=0 to r=r_coords[1])
     j_grid, k_grid = np.meshgrid(
@@ -102,6 +124,8 @@ def export_to_VTK(
     )
     
     p_center_bottom = k_grid.flatten()
+    # The first outer radial slice is now index 0 of the `outer_points` array,
+    # which corresponds to r=r_coords_output[1]
     p_outer1_bottom = outer_point_index_offset + j_grid.flatten() * slice_factor + k_grid.flatten()
     p_outer2_bottom = outer_point_index_offset + ((j_grid.flatten() + 1) % ntheta_cells) * slice_factor + k_grid.flatten()
 
@@ -114,9 +138,10 @@ def export_to_VTK(
         p_center_top, p_outer1_top, p_outer2_top
     ))
 
-    # 2. Hexahedron connectivity (all other cells, r > r_coords[1])
+    # 2. Hexahedron connectivity (all other cells)
+    # The radial index now goes from 1 to nr_in-1 for the outer cells.
     j_grid, i_grid, k_grid = np.meshgrid(
-        np.arange(ntheta_cells), np.arange(1, nr_outer_cells), np.arange(nz_cells), indexing='ij'
+        np.arange(ntheta_cells), np.arange(1, nr_out_cells), np.arange(nz_cells), indexing='ij'
     )
     
     p1_idx = outer_point_index_offset + j_grid * slice_factor + (i_grid - 1) * nz + k_grid
@@ -141,10 +166,12 @@ def export_to_VTK(
         ("hexahedron", hexahedron_connectivity)
     ]
     
-    # Create the point_data dictionary for meshio
     point_data = {}
     point_data.update(processed_scalar_diags)
     point_data.update(processed_vector_diags)
+
+
+
 
     meshio.write_points_cells(
         filename,
